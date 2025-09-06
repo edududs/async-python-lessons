@@ -472,27 +472,27 @@ class AsyncLockExamples:
 
     @staticmethod
     async def event_example():
-        """Exemplo de Event para sincronização entre tasks."""
-        print("\n🎯 Exemplo de Event...")
+        """Example of Event for synchronization between tasks."""
+        print("\n🎯 Event example...")
 
-        # Event para sinalizar que uma condição foi atendida
+        # Event to signal that a condition has been met
         ready_event = asyncio.Event()
         results = []
 
         async def producer():
-            """Producer que prepara dados e sinaliza quando pronto."""
-            print("🏭 Producer iniciando preparação...")
-            await asyncio.sleep(2.0)  # Simula preparação
-            print("🏭 Producer sinalizando que está pronto!")
+            """Producer that prepares data and signals when ready."""
+            print("🏭 Producer starting preparation...")
+            await asyncio.sleep(2.0)  # Simulates preparation
+            print("🏭 Producer signaling that it's ready!")
             ready_event.set()
 
         async def consumer(name: str):
-            """Consumer que aguarda o producer estar pronto."""
-            print(f"👤 {name} aguardando producer...")
+            """Consumer that waits for the producer to be ready."""
+            print(f"👤 {name} waiting for producer...")
             await ready_event.wait()
-            print(f"👤 {name} recebeu sinal, processando...")
+            print(f"👤 {name} received signal, processing...")
             await asyncio.sleep(0.5)
-            results.append(f"Dados processados por {name}")
+            results.append(f"Data processed by {name}")
 
         async with asyncio.TaskGroup() as tg:
             tg.create_task(producer())
@@ -500,47 +500,47 @@ class AsyncLockExamples:
             tg.create_task(consumer("Consumer B"))
             tg.create_task(consumer("Consumer C"))
 
-        print(f"📊 Resultados: {results}")
+        print(f"📊 Results: {results}")
         return results
 
     @staticmethod
     async def condition_example():
-        """Exemplo de Condition para sincronização complexa."""
-        print("\n🔐 Exemplo de Condition...")
+        """Example of Condition for complex synchronization."""
+        print("\n🔐 Condition example...")
 
-        # Condition para coordenar acesso a um buffer
+        # Condition to coordinate access to a buffer
         condition = asyncio.Condition()
         buffer: list[str] = []
         max_size = 3
 
         async def producer_condition(name: str):
-            """Producer que aguarda espaço no buffer."""
+            """Producer that waits for space in the buffer."""
             for idx in range(3):
                 async with condition:
-                    # Aguardar até ter espaço no buffer
+                    # Wait until there's space in the buffer
                     while len(buffer) >= max_size:
-                        print(f"🏭 {name} aguardando espaço no buffer...")
+                        print(f"🏭 {name} waiting for space in buffer...")
                         await condition.wait()
 
-                    item = f"Item{idx} de {name}"
+                    item = f"Item{idx} from {name}"
                     buffer.append(item)
-                    print(f"🏭 {name} adicionou {item}, buffer: {buffer}")
-                    condition.notify()  # Notificar consumers
+                    print(f"🏭 {name} added {item}, buffer: {buffer}")
+                    condition.notify()  # Notify consumers
 
                 await asyncio.sleep(0.3)
 
         async def consumer_condition(name: str):
-            """Consumer que aguarda itens no buffer."""
+            """Consumer that waits for items in the buffer."""
             for idx in range(3):
                 async with condition:
-                    # Aguardar até ter itens no buffer
+                    # Wait until there are items in the buffer
                     while len(buffer) == 0:
-                        print(f"👤 {name} aguardando itens no buffer...")
+                        print(f"👤 {name} waiting for items in buffer...")
                         await condition.wait()
 
                     item = buffer.pop(0)
-                    print(f"👤 {name} consumiu {item}, buffer: {buffer}")
-                    condition.notify()  # Notificar producers
+                    print(f"👤 {name} consumed {item}, buffer: {buffer}")
+                    condition.notify()  # Notify producers
 
                 await asyncio.sleep(0.4)
 
@@ -548,88 +548,88 @@ class AsyncLockExamples:
             tg.create_task(producer_condition("Producer A"))
             tg.create_task(consumer_condition("Consumer A"))
 
-        print(f"📊 Buffer final: {buffer}")
+        print(f"📊 Final buffer: {buffer}")
         return buffer
 
     @staticmethod
     async def barrier_example():
-        """Exemplo de Barrier para sincronização de múltiplas tasks."""
-        print("\n🚧 Exemplo de Barrier...")
+        """Example of Barrier for synchronization of multiple tasks."""
+        print("\n🚧 Barrier example...")
 
-        # Barrier que aguarda 3 tasks chegarem
+        # Barrier that waits for 3 tasks to arrive
         barrier = asyncio.Barrier(3)
 
         async def worker_with_barrier(name: str, work_time: float):
-            """Worker que aguarda todos chegarem na barrier."""
-            print(f"👷 {name} iniciando trabalho...")
+            """Worker that waits for all to arrive at the barrier."""
+            print(f"👷 {name} starting work...")
             await asyncio.sleep(work_time)
-            print(f"👷 {name} chegou na barrier, aguardando outros...")
+            print(f"👷 {name} arrived at barrier, waiting for others...")
 
             try:
                 await barrier.wait()
-                print(f"🎉 {name} passou pela barrier! Todos chegaram!")
+                print(f"🎉 {name} passed through barrier! Everyone arrived!")
             except asyncio.BrokenBarrierError:
-                print(f"❌ {name} - Barrier foi quebrada!")
+                print(f"❌ {name} - Barrier was broken!")
 
         async with asyncio.TaskGroup() as tg:
             tg.create_task(worker_with_barrier("Worker A", 0.5))
             tg.create_task(worker_with_barrier("Worker B", 1.0))
             tg.create_task(worker_with_barrier("Worker C", 1.5))
 
-        print("✅ Barrier concluída com sucesso!")
+        print("✅ Barrier completed successfully!")
 
     @staticmethod
     async def queue_example():
-        """Exemplo de Queue para comunicação entre tasks."""
-        print("\n📦 Exemplo de Queue...")
+        """Example of Queue for communication between tasks."""
+        print("\n📦 Queue example...")
 
-        # Queue para comunicação producer-consumer
+        # Queue for producer-consumer communication
         queue: asyncio.Queue[str | None] = asyncio.Queue(maxsize=3)
         results = []
 
         async def producer_queue(name: str, items: int):
-            """Producer que coloca itens na queue."""
+            """Producer that puts items in the queue."""
             for i in range(items):
-                item = f"Item{i} de {name}"
+                item = f"Item{i} from {name}"
                 await queue.put(item)
-                print(f"🏭 {name} colocou {item} na queue (tamanho: {queue.qsize()})")
+                print(f"🏭 {name} put {item} in queue (size: {queue.qsize()})")
                 await asyncio.sleep(0.2)
 
-            # Sinalizar fim
+            # Signal end
             await queue.put(None)
-            print(f"🏭 {name} finalizou")
+            print(f"🏭 {name} finished")
 
         async def consumer_queue(name: str):
-            """Consumer que retira itens da queue."""
+            """Consumer that takes items from the queue."""
             while True:
                 item = await queue.get()
                 if item is None:
                     queue.task_done()
                     break
 
-                print(f"👤 {name} consumiu {item}")
+                print(f"👤 {name} consumed {item}")
                 await asyncio.sleep(0.3)
-                results.append(f"{name} processou {item}")
+                results.append(f"{name} processed {item}")
                 queue.task_done()
 
-            print(f"👤 {name} finalizou")
+            print(f"👤 {name} finished")
 
         async with asyncio.TaskGroup() as tg:
             tg.create_task(producer_queue("Producer A", 2))
             tg.create_task(consumer_queue("Consumer A"))
 
-        # Aguardar todas as tasks terminarem
+        # Wait for all tasks to finish
         await queue.join()
-        print(f"📊 Resultados: {results}")
+        print(f"📊 Results: {results}")
         return results
 
 
 async def demonstrate_locks():
-    """Executa todos os exemplos de locks e sincronização."""
-    print("🔒 DEMONSTRANDO LOCKS E SINCRONIZAÇÃO EM ASYNCIO...")
+    """Executes all lock and synchronization examples."""
+    print("🔒 DEMONSTRATING LOCKS AND SYNCHRONIZATION IN ASYNCIO...")
     print("=" * 60)
 
-    # Executar todos os exemplos
+    # Execute all examples
     await AsyncLockExamples.basic_lock_example()
     await AsyncLockExamples.rlock_example()
     await AsyncLockExamples.semaphore_example()
@@ -639,22 +639,22 @@ async def demonstrate_locks():
     await AsyncLockExamples.queue_example()
 
     print("=" * 60)
-    print("✅ Todos os exemplos de locks concluídos!")
+    print("✅ All lock examples completed!")
 
 
 if __name__ == "__main__":
-    # Executar demonstração dos TaskGroups
-    print("🎯 EXECUTANDO EXEMPLOS DE TASK GROUPS...")
+    # Execute TaskGroups demonstration
+    print("🎯 EXECUTING TASK GROUPS EXAMPLES...")
     asyncio.run(task_groups())
 
     print("\n" + "=" * 60 + "\n")
 
-    # Executar demonstração dos Futures
-    print("🎯 EXECUTANDO EXEMPLOS DE FUTURES...")
+    # Execute Futures demonstration
+    print("🎯 EXECUTING FUTURES EXAMPLES...")
     asyncio.run(main_future())
 
     print("\n" + "=" * 60 + "\n")
 
-    # Executar demonstração dos Locks
-    print("🎯 EXECUTANDO EXEMPLOS DE LOCKS...")
+    # Execute Locks demonstration
+    print("🎯 EXECUTING LOCKS EXAMPLES...")
     asyncio.run(demonstrate_locks())
