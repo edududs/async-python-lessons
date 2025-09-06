@@ -33,7 +33,7 @@ async def basic_tasks():
     print(results)
     for result in results:
         print(f"Received result: {result}")
-    print(f"Total: {duration:.2f}s (deveria ser ~2.0s, não 1.0+2.0+1.5)")
+    print(f"Total: {duration:.2f}s (should be ~2.0s, not 1.0+2.0+1.5)")
 
 
 # ===============================
@@ -42,177 +42,177 @@ async def basic_tasks():
 
 
 class TaskGroupExamples:
-    """Demonstra diferentes cenários de uso do asyncio.TaskGroup."""
+    """Demonstrates different usage scenarios of asyncio.TaskGroup."""
 
     @staticmethod
     async def basic_task_group():
-        """Exemplo básico de TaskGroup com nomes aleatórios."""
+        """Basic TaskGroup example with random names."""
         init = perf_counter()
         tasks = []
 
         async with asyncio.TaskGroup() as tg:
-            # Criar listas e embaralhar aleatoriamente
-            nomes = ["laranja", "macaco", "banana", "casa"]
-            tempos = [1.0, 2.0, 1.5, 4.0]
-            random.shuffle(nomes)
+            # Create lists and shuffle randomly
+            names = ["orange", "monkey", "banana", "house"]
+            times = [1.0, 2.0, 1.5, 4.0]
+            random.shuffle(names)
 
-            for nome, sleep_time in zip(nomes, tempos, strict=False):
-                task = tg.create_task(fetch_data(nome, sleep_time))
+            for name, sleep_time in zip(names, times, strict=False):
+                task = tg.create_task(fetch_data(name, sleep_time))
                 tasks.append(task)
 
         results = [task.result() for task in tasks]
-        print(f"📊 Resultados: {results}")
+        print(f"📊 Results: {results}")
         for result in results:
-            print(f"📋 Resultado recebido: {result}")
+            print(f"📋 Received result: {result}")
 
         duration = perf_counter() - init
-        print(f"⏱️  Total: {duration:.2f}s (deveria ser ~4.0s, não 1.0+2.0+1.5+4.0)")
+        print(f"⏱️  Total: {duration:.2f}s (should be ~4.0s, not 1.0+2.0+1.5+4.0)")
         return results
 
     @staticmethod
     async def task_group_with_error_handling():
-        """TaskGroup com tratamento de erros e exceções."""
+        """TaskGroup with error handling and exceptions."""
         init = perf_counter()
-        print("\n🔄 TaskGroup com tratamento de erros...")
+        print("\n🔄 TaskGroup with error handling...")
 
         async def fetch_with_retry(name: str, delay: float, fail_chance: float = 0.3):
-            """Simula fetch com possibilidade de falha."""
+            """Simulates fetch with possibility of failure."""
             await asyncio.sleep(delay)
             if random.random() < fail_chance:
-                raise Exception(f"Falha simulada para {name}")
-            return {"data": f"Sucesso para {name}", "delay": delay}
+                raise Exception(f"Simulated failure for {name}")
+            return {"data": f"Success for {name}", "delay": delay}
 
         try:
             async with asyncio.TaskGroup() as tg:
-                # Algumas tasks podem falhar
+                # Some tasks may fail
                 tg.create_task(fetch_with_retry("A", 1.0, 0.1))
                 tg.create_task(fetch_with_retry("B", 1.5, 0.5))
                 tg.create_task(fetch_with_retry("C", 2.0, 0.2))
                 tg.create_task(fetch_with_retry("D", 0.5, 0.8))
 
-                print("🚀 Tasks criadas, aguardando conclusão...")
+                print("🚀 Tasks created, waiting for completion...")
 
         except Exception as e:
-            print(f"❌ Alguma task falhou: {e}")
+            print(f"❌ Some task failed: {e}")
 
         duration = perf_counter() - init
-        print(f"⏱️  Tempo total: {duration:.2f}s")
+        print(f"⏱️  Total time: {duration:.2f}s")
         return duration
 
     @staticmethod
     async def task_group_with_timeout():
-        """TaskGroup com timeout global para todas as tasks."""
+        """TaskGroup with global timeout for all tasks."""
         init = perf_counter()
-        print("\n⏰ TaskGroup com timeout global...")
+        print("\n⏰ TaskGroup with global timeout...")
 
         try:
-            async with asyncio.timeout(2.5):  # Timeout global de 2.5s
+            async with asyncio.timeout(2.5):  # Global timeout of 2.5s
                 async with asyncio.TaskGroup() as tg:
-                    # Tasks com diferentes durações
-                    tg.create_task(fetch_data("Rápida", 0.5))
-                    tg.create_task(fetch_data("Média", 1.5))
-                    tg.create_task(fetch_data("Lenta", 3.0))  # Vai falhar por timeout
+                    # Tasks with different durations
+                    tg.create_task(fetch_data("Fast", 0.5))
+                    tg.create_task(fetch_data("Medium", 1.5))
+                    tg.create_task(fetch_data("Slow", 3.0))  # Will fail due to timeout
                     tg.create_task(
-                        fetch_data("Muito Lenta", 4.0),
-                    )  # Vai falhar por timeout
+                        fetch_data("Very Slow", 4.0),
+                    )  # Will fail due to timeout
 
-                    print("🚀 Tasks criadas com timeout de 2.5s...")
-                    await asyncio.sleep(0.1)  # Checkpoint para o cancellation scope
+                    print("🚀 Tasks created with 2.5s timeout...")
+                    await asyncio.sleep(0.1)  # Checkpoint for the cancellation scope
 
         except TimeoutError:
-            print("⏰ Timeout global atingido! Algumas tasks foram canceladas.")
+            print("⏰ Global timeout reached! Some tasks were cancelled.")
 
         duration = perf_counter() - init
-        print(f"⏱️  Tempo total: {duration:.2f}s")
+        print(f"⏱️  Total time: {duration:.2f}s")
         return duration
 
     @staticmethod
     async def task_group_with_conditional_tasks():
-        """TaskGroup que cria tasks condicionalmente baseado em resultados."""
+        """TaskGroup that creates tasks conditionally based on results."""
         init = perf_counter()
-        print("\n🎯 TaskGroup com tasks condicionais...")
+        print("\n🎯 TaskGroup with conditional tasks...")
 
         async def check_condition(name: str) -> bool:
-            """Simula verificação de condição."""
+            """Simulates condition checking."""
             await asyncio.sleep(0.5)
             return random.choice([True, False])
 
         async def process_if_valid(name: str):
-            """Processa apenas se a condição for válida."""
+            """Processes only if condition is valid."""
             await asyncio.sleep(1.0)
-            return f"Processado: {name}"
+            return f"Processed: {name}"
 
         results = []
         async with asyncio.TaskGroup() as tg:
-            # Primeira fase: verificar condições
+            # First phase: check conditions
             condition_tasks = []
             for name in ["Item1", "Item2", "Item3", "Item4"]:
                 task = tg.create_task(check_condition(name))
                 condition_tasks.append((name, task))
 
-            # Segunda fase: processar apenas os válidos
+            # Second phase: process only the valid ones
             process_tasks = []
             for name, condition_task in condition_tasks:
                 is_valid = await condition_task
                 if is_valid:
-                    print(f"✅ {name} é válido, criando task de processamento...")
+                    print(f"✅ {name} is valid, creating processing task...")
                     process_task = tg.create_task(process_if_valid(name))
                     process_tasks.append(process_task)
                 else:
-                    print(f"❌ {name} não é válido, pulando...")
+                    print(f"❌ {name} is not valid, skipping...")
 
-            # Coletar resultados
+            # Collect results
             for task in process_tasks:
                 result = await task
                 results.append(result)
 
         duration = perf_counter() - init
-        print(f"📊 Resultados finais: {results}")
-        print(f"⏱️  Tempo total: {duration:.2f}s")
+        print(f"📊 Final results: {results}")
+        print(f"⏱️  Total time: {duration:.2f}s")
         return results
 
     @staticmethod
     async def task_group_with_resource_limiting():
-        """TaskGroup com limitação de recursos (semáforo)."""
+        """TaskGroup with resource limiting (semaphore)."""
         init = perf_counter()
-        print("\n🔒 TaskGroup com limitação de recursos...")
+        print("\n🔒 TaskGroup with resource limiting...")
 
-        # Semáforo limita a 2 tasks simultâneas
+        # Semaphore limits to 2 simultaneous tasks
         semaphore = asyncio.Semaphore(2)
 
         async def fetch_with_semaphore(name: str, delay: float):
-            """Fetch com controle de recursos via semáforo."""
+            """Fetch with resource control via semaphore."""
             async with semaphore:
-                print(f"🔓 {name} adquiriu semáforo")
+                print(f"🔓 {name} acquired semaphore")
                 await asyncio.sleep(delay)
-                print(f"🔓 {name} liberou semáforo")
-                return {"data": f"Dados de {name}", "delay": delay}
+                print(f"🔓 {name} released semaphore")
+                return {"data": f"Data from {name}", "delay": delay}
 
         results = []
         async with asyncio.TaskGroup() as tg:
-            # Criar 6 tasks, mas apenas 2 podem rodar simultaneamente
+            # Create 6 tasks, but only 2 can run simultaneously
             for i in range(6):
                 task = tg.create_task(
                     fetch_with_semaphore(f"Task{i + 1}", 1.0 + i * 0.2),
                 )
                 results.append(task)
 
-            print("🚀 6 tasks criadas com semáforo limitando a 2 simultâneas...")
+            print("🚀 6 tasks created with semaphore limiting to 2 simultaneous...")
 
-        # Coletar resultados
+        # Collect results
         final_results = [task.result() for task in results]
         duration = perf_counter() - init
-        print(f"📊 Resultados: {final_results}")
-        print(f"⏱️  Tempo total: {duration:.2f}s")
+        print(f"📊 Results: {final_results}")
+        print(f"⏱️  Total time: {duration:.2f}s")
         return final_results
 
 
 async def task_groups():
-    """Executa todos os exemplos de TaskGroup."""
-    print("🚀 DEMONSTRANDO TASK GROUPS...")
+    """Executes all TaskGroup examples."""
+    print("🚀 DEMONSTRATING TASK GROUPS...")
     print("=" * 50)
 
-    # Executar todos os exemplos
+    # Execute all examples
     await TaskGroupExamples.basic_task_group()
     await TaskGroupExamples.task_group_with_error_handling()
     await TaskGroupExamples.task_group_with_timeout()
@@ -220,7 +220,7 @@ async def task_groups():
     await TaskGroupExamples.task_group_with_resource_limiting()
 
     print("=" * 50)
-    print("✅ Todos os exemplos de TaskGroup concluídos!")
+    print("✅ All TaskGroup examples completed!")
 
 
 # ===============================
@@ -229,126 +229,126 @@ async def task_groups():
 
 
 class FutureSimulator:
-    """Encapsula operações assíncronas para resolver ou falhar um Future."""
+    """Encapsulates asynchronous operations to resolve or fail a Future."""
 
     @staticmethod
     async def set_result(future: asyncio.Future, result: str):
-        """Simula uma operação assíncrona que resolve um Future."""
+        """Simulates an asynchronous operation that resolves a Future."""
         await asyncio.sleep(2)
         future.set_result(result)
-        print(f"✅ Future resolvido com resultado: '{result}'")
+        print(f"✅ Future resolved with result: '{result}'")
 
     @staticmethod
     async def set_exception(future: asyncio.Future, error_msg: str):
-        """Simula uma operação que falha e define uma exceção no Future."""
+        """Simulates an operation that fails and sets an exception on the Future."""
         await asyncio.sleep(1.5)
         future.set_exception(Exception(error_msg))
-        print(f"❌ Future falhou com exceção: '{error_msg}'")
+        print(f"❌ Future failed with exception: '{error_msg}'")
 
 
 class FutureDemoCases:
-    """Encapsula demonstrações de uso de asyncio.Future."""
+    """Encapsulates demonstrations of asyncio.Future usage."""
 
     @staticmethod
     async def demonstrate_basic_future_success(event_loop):
-        """Demonstra um Future básico resolvido com sucesso."""
-        print("\n📋 Caso 1: Future com resultado bem-sucedido")
+        """Demonstrates a basic Future resolved successfully."""
+        print("\n📋 Case 1: Future with successful result")
         future_result = event_loop.create_future()
         resolve_task = event_loop.create_task(
             FutureSimulator.set_result(
                 future_result,
-                "Operação concluída com sucesso!",
+                "Operation completed successfully!",
             ),
         )
         print(f"Task 1: {resolve_task}")
 
         try:
             result_value = await future_result
-            print(f"🎯 Resultado recebido: {result_value}")
+            print(f"🎯 Result received: {result_value}")
         except Exception as exc:
-            print(f"❌ Erro inesperado: {exc}")
+            print(f"❌ Unexpected error: {exc}")
 
     @staticmethod
     async def demonstrate_future_with_exception(event_loop):
-        """Demonstra um Future que termina com exceção."""
-        print("\n📋 Caso 2: Future com falha/exceção")
+        """Demonstrates a Future that ends with exception."""
+        print("\n📋 Case 2: Future with failure/exception")
         future_result = event_loop.create_future()
         exception_task = event_loop.create_task(
             FutureSimulator.set_exception(
                 future_result,
-                "Erro de conexão com banco de dados",
+                "Database connection error",
             ),
         )
         print(f"Task 2: {exception_task}")
 
         try:
             result_value = await future_result
-            print(f"🎯 Resultado recebido: {result_value}")
+            print(f"🎯 Result received: {result_value}")
         except Exception as exc:
-            print(f"❌ Exceção capturada: {exc}")
+            print(f"❌ Exception caught: {exc}")
 
     @staticmethod
     async def demonstrate_future_with_timeout(event_loop):
-        """Demonstra um Future que excede o tempo limite (timeout)."""
-        print("\n📋 Caso 3: Future com timeout")
+        """Demonstrates a Future that exceeds the time limit (timeout)."""
+        print("\n📋 Case 3: Future with timeout")
         future_result = event_loop.create_future()
         delayed_task = event_loop.create_task(
-            FutureSimulator.set_result(future_result, "Resultado tardio"),
+            FutureSimulator.set_result(future_result, "Late result"),
         )
 
         try:
             result_value = await asyncio.wait_for(future_result, timeout=1.0)
-            print(f"🎯 Resultado recebido: {result_value}")
+            print(f"🎯 Result received: {result_value}")
         except TimeoutError:
-            print("⏰ Timeout! Future não foi resolvido a tempo")
+            print("⏰ Timeout! Future was not resolved in time")
             delayed_task.cancel()
 
     @staticmethod
     async def demonstrate_future_with_callback(event_loop):
-        """Demonstra um Future com callback de conclusão."""
-        print("\n📋 Caso 4: Future com callback de conclusão")
+        """Demonstrates a Future with completion callback."""
+        print("\n📋 Case 4: Future with completion callback")
         future_result = event_loop.create_future()
 
         def on_future_done(completed_future):
             if completed_future.done():
                 if completed_future.exception():
                     print(
-                        f"🔔 Callback: Future falhou com {completed_future.exception()}",
+                        f"🔔 Callback: Future failed with {completed_future.exception()}",
                     )
                 else:
                     print(
-                        f"🔔 Callback: Future concluído com {completed_future.result()}",
+                        f"🔔 Callback: Future completed with {completed_future.result()}",
                     )
 
         future_result.add_done_callback(on_future_done)
         callback_task = event_loop.create_task(
-            FutureSimulator.set_result(future_result, "Future com callback!"),
+            FutureSimulator.set_result(future_result, "Future with callback!"),
         )
         print(f"Task 3: {callback_task}")
         await asyncio.sleep(0.1)
 
     @staticmethod
     async def demonstrate_multiple_futures_with_gather(event_loop):
-        """Demonstra múltiplos Futures resolvidos em paralelo usando gather."""
-        print("\n📋 Caso 5: Múltiplos Futures com gather")
+        """Demonstrates multiple Futures resolved in parallel using gather."""
+        print("\n📋 Case 5: Multiple Futures with gather")
         future_list = []
         for idx in range(3):
             future_result = event_loop.create_future()
             future_list.append(future_result)
             gather_task = event_loop.create_task(
-                FutureSimulator.set_result(future_result, f"Resultado {idx + 1}"),
+                FutureSimulator.set_result(future_result, f"Result {idx + 1}"),
             )
             print(f"Task 4: {gather_task}")
 
         all_results = await asyncio.gather(*future_list, return_exceptions=True)
-        print(f"🎯 Todos os futures resolvidos: {all_results}")
+        print(f"🎯 All futures resolved: {all_results}")
         return all_results
 
 
 async def main_future():
-    """Demonstra os benefícios e casos de uso do Future."""
+    """Demonstrates the benefits and use cases of Future."""
     init = perf_counter()
-    print("🚀 Demonstrando Futures em asyncio...")
+    print("🚀 Demonstrating Futures in asyncio...")
     print("=" * 50)
 
     loop = asyncio.get_running_loop()
@@ -360,7 +360,7 @@ async def main_future():
     results = await FutureDemoCases.demonstrate_multiple_futures_with_gather(loop)
 
     duration = perf_counter() - init
-    print(f"\n⏱️  Tempo total: {duration:.2f}s")
+    print(f"\n⏱️  Total time: {duration:.2f}s")
     print("=" * 50)
 
     demonstrate_future_benefits()
@@ -368,16 +368,16 @@ async def main_future():
 
 
 def demonstrate_future_benefits():
-    """Explica por que usar Futures."""
-    print("\n💡 BENEFÍCIOS DOS FUTURES:")
-    print("1. Controle manual sobre quando e como resolver operações assíncronas")
-    print("2. Possibilidade de cancelar operações em andamento")
-    print("3. Tratamento de exceções personalizado")
-    print("4. Callbacks para reações automáticas quando operações terminam")
-    print("5. Timeouts configuráveis")
-    print("6. Composição de múltiplas operações assíncronas")
-    print("7. Separação entre criação e execução de operações")
-    print("8. Útil para APIs que precisam de controle granular sobre operações")
+    """Explains why to use Futures."""
+    print("\n💡 BENEFITS OF FUTURES:")
+    print("1. Manual control over when and how to resolve asynchronous operations")
+    print("2. Ability to cancel operations in progress")
+    print("3. Custom exception handling")
+    print("4. Callbacks for automatic reactions when operations finish")
+    print("5. Configurable timeouts")
+    print("6. Composition of multiple asynchronous operations")
+    print("7. Separation between creation and execution of operations")
+    print("8. Useful for APIs that need granular control over operations")
 
 
 # ===============================
@@ -386,78 +386,78 @@ def demonstrate_future_benefits():
 
 
 class AsyncLockExamples:
-    """Demonstra diferentes tipos de locks e sincronização em asyncio."""
+    """Demonstrates different types of locks and synchronization in asyncio."""
 
     @staticmethod
     async def basic_lock_example():
-        """Exemplo básico de Lock para acesso exclusivo a um recurso."""
-        print("\n🔒 Exemplo básico de Lock...")
+        """Basic Lock example for exclusive access to a resource."""
+        print("\n🔒 Basic Lock example...")
 
-        # Recurso compartilhado
+        # Shared resource
         shared_counter = 0
         lock = asyncio.Lock()
 
         async def increment_with_lock(name: str, delay: float):
-            """Incrementa o contador com lock exclusivo."""
+            """Increments the counter with exclusive lock."""
             nonlocal shared_counter
             async with lock:
-                print(f"🔓 {name} adquiriu o lock")
+                print(f"🔓 {name} acquired the lock")
                 current = shared_counter
-                await asyncio.sleep(delay)  # Simula trabalho
+                await asyncio.sleep(delay)  # Simulates work
                 shared_counter = current + 1
-                print(f"🔓 {name} liberou o lock, contador: {shared_counter}")
+                print(f"🔓 {name} released the lock, counter: {shared_counter}")
 
-        # Executar múltiplas tasks concorrentes
+        # Execute multiple concurrent tasks
         async with asyncio.TaskGroup() as tg:
             tg.create_task(increment_with_lock("Task A", 0.5))
             tg.create_task(increment_with_lock("Task B", 0.3))
             tg.create_task(increment_with_lock("Task C", 0.7))
             tg.create_task(increment_with_lock("Task D", 0.2))
 
-        print(f"📊 Contador final: {shared_counter}")
+        print(f"📊 Final counter: {shared_counter}")
         return shared_counter
 
     @staticmethod
     async def rlock_example():
-        """Exemplo de RLock (Reentrant Lock) para funções recursivas."""
-        print("\n🔄 Exemplo de RLock (Reentrant Lock)...")
+        """Example of RLock (Reentrant Lock) for recursive functions."""
+        print("\n🔄 RLock (Reentrant Lock) example...")
 
-        rlock = asyncio.Lock()  # asyncio.Lock já é reentrant
+        rlock = asyncio.Lock()  # asyncio.Lock is already reentrant
 
         async def recursive_function(name: str, depth: int):
-            """Função que chama a si mesma, demonstrando reentrância."""
+            """Function that calls itself, demonstrating reentrancy."""
             async with rlock:
-                print(f"🔓 {name} nível {depth} - lock adquirido")
+                print(f"🔓 {name} level {depth} - lock acquired")
                 if depth > 0:
                     await asyncio.sleep(0.1)
                     await recursive_function(name, depth - 1)
-                print(f"🔓 {name} nível {depth} - lock liberado")
+                print(f"🔓 {name} level {depth} - lock released")
 
         async with asyncio.TaskGroup() as tg:
             tg.create_task(recursive_function("Task A", 3))
             tg.create_task(recursive_function("Task B", 2))
 
-        print("✅ RLock demonstrado com sucesso!")
+        print("✅ RLock demonstrated successfully!")
 
     @staticmethod
     async def semaphore_example():
-        """Exemplo de Semaphore para limitar concorrência."""
-        print("\n🚦 Exemplo de Semaphore...")
+        """Example of Semaphore to limit concurrency."""
+        print("\n🚦 Semaphore example...")
 
-        # Semáforo permite apenas 3 tasks simultâneas
+        # Semaphore allows only 3 simultaneous tasks
         semaphore = asyncio.Semaphore(3)
 
         async def worker_with_semaphore(name: str, work_time: float):
-            """Worker que usa semáforo para limitar concorrência."""
+            """Worker that uses semaphore to limit concurrency."""
             async with semaphore:
                 print(
-                    f"🚦 {name} adquiriu semáforo (slots disponíveis: {semaphore._value})",
+                    f"🚦 {name} acquired semaphore (available slots: {semaphore._value})",
                 )
                 await asyncio.sleep(work_time)
-                print(f"🚦 {name} liberou semáforo")
-                return f"Trabalho de {name} concluído"
+                print(f"🚦 {name} released semaphore")
+                return f"Work by {name} completed"
 
-        # Criar 6 workers, mas apenas 3 podem rodar simultaneamente
+        # Create 6 workers, but only 3 can run simultaneously
         tasks = []
         async with asyncio.TaskGroup() as tg:
             for idx in range(6):
@@ -467,32 +467,32 @@ class AsyncLockExamples:
                 tasks.append(task)
 
         results = [task.result() for task in tasks]
-        print(f"📊 Resultados: {results}")
+        print(f"📊 Results: {results}")
         return results
 
     @staticmethod
     async def event_example():
-        """Exemplo de Event para sincronização entre tasks."""
-        print("\n🎯 Exemplo de Event...")
+        """Example of Event for synchronization between tasks."""
+        print("\n🎯 Event example...")
 
-        # Event para sinalizar que uma condição foi atendida
+        # Event to signal that a condition has been met
         ready_event = asyncio.Event()
         results = []
 
         async def producer():
-            """Producer que prepara dados e sinaliza quando pronto."""
-            print("🏭 Producer iniciando preparação...")
-            await asyncio.sleep(2.0)  # Simula preparação
-            print("🏭 Producer sinalizando que está pronto!")
+            """Producer that prepares data and signals when ready."""
+            print("🏭 Producer starting preparation...")
+            await asyncio.sleep(2.0)  # Simulates preparation
+            print("🏭 Producer signaling that it's ready!")
             ready_event.set()
 
         async def consumer(name: str):
-            """Consumer que aguarda o producer estar pronto."""
-            print(f"👤 {name} aguardando producer...")
+            """Consumer that waits for the producer to be ready."""
+            print(f"👤 {name} waiting for producer...")
             await ready_event.wait()
-            print(f"👤 {name} recebeu sinal, processando...")
+            print(f"👤 {name} received signal, processing...")
             await asyncio.sleep(0.5)
-            results.append(f"Dados processados por {name}")
+            results.append(f"Data processed by {name}")
 
         async with asyncio.TaskGroup() as tg:
             tg.create_task(producer())
@@ -500,47 +500,47 @@ class AsyncLockExamples:
             tg.create_task(consumer("Consumer B"))
             tg.create_task(consumer("Consumer C"))
 
-        print(f"📊 Resultados: {results}")
+        print(f"📊 Results: {results}")
         return results
 
     @staticmethod
     async def condition_example():
-        """Exemplo de Condition para sincronização complexa."""
-        print("\n🔐 Exemplo de Condition...")
+        """Example of Condition for complex synchronization."""
+        print("\n🔐 Condition example...")
 
-        # Condition para coordenar acesso a um buffer
+        # Condition to coordinate access to a buffer
         condition = asyncio.Condition()
         buffer: list[str] = []
         max_size = 3
 
         async def producer_condition(name: str):
-            """Producer que aguarda espaço no buffer."""
+            """Producer that waits for space in the buffer."""
             for idx in range(3):
                 async with condition:
-                    # Aguardar até ter espaço no buffer
+                    # Wait until there's space in the buffer
                     while len(buffer) >= max_size:
-                        print(f"🏭 {name} aguardando espaço no buffer...")
+                        print(f"🏭 {name} waiting for space in buffer...")
                         await condition.wait()
 
-                    item = f"Item{idx} de {name}"
+                    item = f"Item{idx} from {name}"
                     buffer.append(item)
-                    print(f"🏭 {name} adicionou {item}, buffer: {buffer}")
-                    condition.notify()  # Notificar consumers
+                    print(f"🏭 {name} added {item}, buffer: {buffer}")
+                    condition.notify()  # Notify consumers
 
                 await asyncio.sleep(0.3)
 
         async def consumer_condition(name: str):
-            """Consumer que aguarda itens no buffer."""
+            """Consumer that waits for items in the buffer."""
             for idx in range(3):
                 async with condition:
-                    # Aguardar até ter itens no buffer
+                    # Wait until there are items in the buffer
                     while len(buffer) == 0:
-                        print(f"👤 {name} aguardando itens no buffer...")
+                        print(f"👤 {name} waiting for items in buffer...")
                         await condition.wait()
 
                     item = buffer.pop(0)
-                    print(f"👤 {name} consumiu {item}, buffer: {buffer}")
-                    condition.notify()  # Notificar producers
+                    print(f"👤 {name} consumed {item}, buffer: {buffer}")
+                    condition.notify()  # Notify producers
 
                 await asyncio.sleep(0.4)
 
@@ -548,88 +548,88 @@ class AsyncLockExamples:
             tg.create_task(producer_condition("Producer A"))
             tg.create_task(consumer_condition("Consumer A"))
 
-        print(f"📊 Buffer final: {buffer}")
+        print(f"📊 Final buffer: {buffer}")
         return buffer
 
     @staticmethod
     async def barrier_example():
-        """Exemplo de Barrier para sincronização de múltiplas tasks."""
-        print("\n🚧 Exemplo de Barrier...")
+        """Example of Barrier for synchronization of multiple tasks."""
+        print("\n🚧 Barrier example...")
 
-        # Barrier que aguarda 3 tasks chegarem
+        # Barrier that waits for 3 tasks to arrive
         barrier = asyncio.Barrier(3)
 
         async def worker_with_barrier(name: str, work_time: float):
-            """Worker que aguarda todos chegarem na barrier."""
-            print(f"👷 {name} iniciando trabalho...")
+            """Worker that waits for all to arrive at the barrier."""
+            print(f"👷 {name} starting work...")
             await asyncio.sleep(work_time)
-            print(f"👷 {name} chegou na barrier, aguardando outros...")
+            print(f"👷 {name} arrived at barrier, waiting for others...")
 
             try:
                 await barrier.wait()
-                print(f"🎉 {name} passou pela barrier! Todos chegaram!")
+                print(f"🎉 {name} passed through barrier! Everyone arrived!")
             except asyncio.BrokenBarrierError:
-                print(f"❌ {name} - Barrier foi quebrada!")
+                print(f"❌ {name} - Barrier was broken!")
 
         async with asyncio.TaskGroup() as tg:
             tg.create_task(worker_with_barrier("Worker A", 0.5))
             tg.create_task(worker_with_barrier("Worker B", 1.0))
             tg.create_task(worker_with_barrier("Worker C", 1.5))
 
-        print("✅ Barrier concluída com sucesso!")
+        print("✅ Barrier completed successfully!")
 
     @staticmethod
     async def queue_example():
-        """Exemplo de Queue para comunicação entre tasks."""
-        print("\n📦 Exemplo de Queue...")
+        """Example of Queue for communication between tasks."""
+        print("\n📦 Queue example...")
 
-        # Queue para comunicação producer-consumer
+        # Queue for producer-consumer communication
         queue: asyncio.Queue[str | None] = asyncio.Queue(maxsize=3)
         results = []
 
         async def producer_queue(name: str, items: int):
-            """Producer que coloca itens na queue."""
+            """Producer that puts items in the queue."""
             for i in range(items):
-                item = f"Item{i} de {name}"
+                item = f"Item{i} from {name}"
                 await queue.put(item)
-                print(f"🏭 {name} colocou {item} na queue (tamanho: {queue.qsize()})")
+                print(f"🏭 {name} put {item} in queue (size: {queue.qsize()})")
                 await asyncio.sleep(0.2)
 
-            # Sinalizar fim
+            # Signal end
             await queue.put(None)
-            print(f"🏭 {name} finalizou")
+            print(f"🏭 {name} finished")
 
         async def consumer_queue(name: str):
-            """Consumer que retira itens da queue."""
+            """Consumer that takes items from the queue."""
             while True:
                 item = await queue.get()
                 if item is None:
                     queue.task_done()
                     break
 
-                print(f"👤 {name} consumiu {item}")
+                print(f"👤 {name} consumed {item}")
                 await asyncio.sleep(0.3)
-                results.append(f"{name} processou {item}")
+                results.append(f"{name} processed {item}")
                 queue.task_done()
 
-            print(f"👤 {name} finalizou")
+            print(f"👤 {name} finished")
 
         async with asyncio.TaskGroup() as tg:
             tg.create_task(producer_queue("Producer A", 2))
             tg.create_task(consumer_queue("Consumer A"))
 
-        # Aguardar todas as tasks terminarem
+        # Wait for all tasks to finish
         await queue.join()
-        print(f"📊 Resultados: {results}")
+        print(f"📊 Results: {results}")
         return results
 
 
 async def demonstrate_locks():
-    """Executa todos os exemplos de locks e sincronização."""
-    print("🔒 DEMONSTRANDO LOCKS E SINCRONIZAÇÃO EM ASYNCIO...")
+    """Executes all lock and synchronization examples."""
+    print("🔒 DEMONSTRATING LOCKS AND SYNCHRONIZATION IN ASYNCIO...")
     print("=" * 60)
 
-    # Executar todos os exemplos
+    # Execute all examples
     await AsyncLockExamples.basic_lock_example()
     await AsyncLockExamples.rlock_example()
     await AsyncLockExamples.semaphore_example()
@@ -639,22 +639,22 @@ async def demonstrate_locks():
     await AsyncLockExamples.queue_example()
 
     print("=" * 60)
-    print("✅ Todos os exemplos de locks concluídos!")
+    print("✅ All lock examples completed!")
 
 
 if __name__ == "__main__":
-    # Executar demonstração dos TaskGroups
-    print("🎯 EXECUTANDO EXEMPLOS DE TASK GROUPS...")
+    # Execute TaskGroups demonstration
+    print("🎯 EXECUTING TASK GROUPS EXAMPLES...")
     asyncio.run(task_groups())
 
     print("\n" + "=" * 60 + "\n")
 
-    # Executar demonstração dos Futures
-    print("🎯 EXECUTANDO EXEMPLOS DE FUTURES...")
+    # Execute Futures demonstration
+    print("🎯 EXECUTING FUTURES EXAMPLES...")
     asyncio.run(main_future())
 
     print("\n" + "=" * 60 + "\n")
 
-    # Executar demonstração dos Locks
-    print("🎯 EXECUTANDO EXEMPLOS DE LOCKS...")
+    # Execute Locks demonstration
+    print("🎯 EXECUTING LOCKS EXAMPLES...")
     asyncio.run(demonstrate_locks())
